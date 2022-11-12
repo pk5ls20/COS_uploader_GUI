@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>378</width>
+    <height>297</height>
+   </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>434</width>
+    <height>325</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWeiget_main">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>371</width>
+      <height>260</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>371</width>
+      <height>260</height>
+     </size>
+    </property>
+    <property name="baseSize">
+     <size>
+      <width>371</width>
+      <height>251</height>
+     </size>
+    </property>
+    <property name="tabPosition">
+     <enum>QTabWidget::North</enum>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="select">
+     <property name="accessibleName">
+      <string/>
+     </property>
+     <attribute name="title">
+      <string>上传</string>
+     </attribute>
+     <widget class="QTextBrowser" name="TB1_main">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>10</y>
+        <width>291</width>
+        <height>121</height>
+       </rect>
+      </property>
+      <property name="acceptDrops">
+       <bool>true</bool>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;title&gt;设置一个居中的图片&lt;/title&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'SimHei';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/pic/in.svg&quot; width=&quot;120&quot; height=&quot;80&quot; /&gt;&lt;span style=&quot; font-family:'SimHei';&quot;&gt; &lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'SimHei';&quot;&gt;将文件拖拽到此处，或 &lt;/span&gt;&lt;span style=&quot; font-family:'SimHei'; font-weight:600; color:#00007f;&quot;&gt;点击上传&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Lb1_uploadto">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>150</y>
+        <width>48</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>上传至：</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="CB1_bucket">
+      <property name="geometry">
+       <rect>
+        <x>93</x>
+        <y>150</y>
+        <width>141</width>
+        <height>19</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QProgressBar" name="PB1">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>180</y>
+        <width>301</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="B1_upload">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>150</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>开始上传</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="lb1l_status">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>210</y>
+        <width>171</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>准备就绪...</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="output">
+     <attribute name="title">
+      <string>输出</string>
+     </attribute>
+     <widget class="QTextBrowser" name="TB2_output">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>331</width>
+        <height>181</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="CB2_isautoclear">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>200</y>
+        <width>68</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>自动清空</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="B2_clearall">
+      <property name="geometry">
+       <rect>
+        <x>270</x>
+        <y>200</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>清空</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="secret">
+     <attribute name="title">
+      <string>参数配置</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>361</width>
+        <height>171</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Config</string>
+      </property>
+      <widget class="QLabel" name="LB3_region">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>150</y>
+         <width>36</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Region</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="LE3_mykey">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>41</y>
+         <width>161</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="LE3_sid">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>71</y>
+         <width>161</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_skey">
+       <property name="geometry">
+        <rect>
+         <x>9</x>
+         <y>97</y>
+         <width>58</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#aa0000; vertical-align:super;&quot;&gt;*&lt;/span&gt;secretkey&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="LE3_skey">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>96</y>
+         <width>161</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_sec">
+       <property name="geometry">
+        <rect>
+         <x>9</x>
+         <y>42</y>
+         <width>88</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#aa0000; vertical-align:super;&quot;&gt;*&lt;/span&gt;MyKey&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_sid">
+       <property name="geometry">
+        <rect>
+         <x>9</x>
+         <y>72</y>
+         <width>52</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#aa0000; vertical-align:super;&quot;&gt;*&lt;/span&gt;secretid&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="LE3_region">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>150</y>
+         <width>161</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_bucket">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>120</y>
+         <width>36</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Bucket</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="B3_save">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>110</y>
+         <width>91</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>SaveConfig</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="B3_load">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>60</y>
+         <width>91</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>LoadConfig</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_1_loadfilename">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>20</y>
+         <width>261</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>UNKNOWN</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="LB3_1_now_load">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>341</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>当前加载为：</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="LE3_bucket">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>120</y>
+         <width>151</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="B3_quebucket">
+       <property name="geometry">
+        <rect>
+         <x>230</x>
+         <y>120</y>
+         <width>16</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>?</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>180</y>
+        <width>361</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Profile</string>
+      </property>
+      <widget class="QCheckBox" name="CB3_2_israndomname">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>103</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>随机文件名上传</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="CB3_2_islog">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>23</y>
+         <width>68</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>输出日志</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="CB3_2_loglevel">
+       <property name="geometry">
+        <rect>
+         <x>201</x>
+         <y>22</y>
+         <width>60</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <property name="duplicatesEnabled">
+        <bool>false</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>0-简单</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>1-基本</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2-详细</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QPushButton" name="CB3_2_save">
+       <property name="geometry">
+        <rect>
+         <x>266</x>
+         <y>22</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Save</string>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>378</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources>
+  <include location="source.qrc"/>
+ </resources>
+ <connections/>
+</ui>
