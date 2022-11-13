@@ -103,6 +103,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.B1_upload = QtWidgets.QPushButton(self.select)
         self.B1_upload.setGeometry(QtCore.QRect(250, 150, 75, 23))
         self.B1_upload.setObjectName("B1_upload")
+        self.B1_upload.setEnabled(False)
         self.lb1l_status = QtWidgets.QLabel(self.select)
         self.lb1l_status.setGeometry(QtCore.QRect(10, 210, 171, 16))
         self.lb1l_status.setObjectName("lb1l_status")
@@ -206,6 +207,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.tabWeiget_main.currentChanged.connect(self.tabchange)
         self.B3_load.clicked.connect(self.click_B3)
         self.B1_upload.clicked.connect(self.click_B1)
+        self.B2_clearall.clicked.connect(self.click_B2)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -264,6 +266,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.LB3_1_loadfilename.setText('')
 
     # 事件：点击B3
+    def click_B2(self):
+        self.TB2_output.clear()
+
     def click_B3(self):
         global isok
         COSfilename_e, fd = QFileDialog.getOpenFileName(self, '选择一个py文件', './',
@@ -295,6 +300,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     isok = 1
                     QMessageBox.information(self, "提示", "参数加载成功！")
                     self.lb1l_status.setText('参数加载成功')
+                    self.B1_upload.setEnabled(True)
                     # 将参数加载到第一页的选择库栏
                     # 首先将bucket分割，后赋值给a_key
                     list1: list[str] = str(a_key[5]).split(';')
