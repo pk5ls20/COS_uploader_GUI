@@ -44,7 +44,6 @@ class MyTB(QTextBrowser):
     def dragEnterEvent(self, event):
         filepath[0]=(event.mimeData().urls()[0].toLocalFile())
         print(filepath[0])
-
 # 加载主窗口
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
@@ -54,6 +53,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setupUi(self)
         self.retranslateUi(self)
         self.setAcceptDrops(True)  # ==> 必须设置、
+        self.save_stdout = sys.stdout
+        sys.stdout = self
+
+    # 输出重写
+    def write(self,message):
+        self.TB2_output.append(message)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -295,15 +300,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     QMessageBox.warning(self, "注意", "Mykey校验未通过，请重新输入！", QMessageBox.Cancel)
             else:
                 QMessageBox.warning(self, "警告", "请选择文件", QMessageBox.Cancel)
+    # 尝试用双多线程改写
 
     # 函数：进度条回调，计算当前上传的百分比
-    def upload_percentage(self,consumed_bytes, total_bytes):
+    def upload_percentage(self, consumed_bytes, total_bytes):
         # 进度条回调函数，计算当前上传的百分比
+        def run():
+            self.PB1.setValue(rate)
+
         if total_bytes:
             rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
             print(rate)
-            self.PB1.setValue(rate)
-            sys.stdout.flush()
+            r = Thread(target=run)
+            r.start()
 
     # 搬来的上传文件函数
     def uploadfile(self,filepathall,isallfak):
@@ -364,7 +373,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             # 询问用户名移到这里
             isallfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
                                             QMessageBox.Yes | QMessageBox.No)
-            self.uploadfile(filepath[0],isallfak)
+            thread = Thread(target=self.uploadfile,
+                            args=(filepath[0],isallfak))
+            thread.start()
 
 
 if __name__ == "__main__":
