@@ -26,6 +26,7 @@ from Encryptor import enc
 from PyQt5 import QtCore, QtGui, QtWidgets, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+from PySide2.QtCore import Signal,QObject
 from typing import List, Union
 
 # 初始化变量
@@ -34,6 +35,9 @@ a_key: List[Union[int, str]] = [0] * 1000
 a_pas = ''
 filepath = [0]*10000
 isok = 0
+
+class updatex(QObject):
+    pb1c = Signal(QProgressBar,int)
 
 # 重制TextBrowser为拖拽作准备
 class MyTB(QTextBrowser):
@@ -55,6 +59,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setAcceptDrops(True)  # ==> 必须设置、
         self.save_stdout = sys.stdout
         sys.stdout = self
+        self.ups = updatex()
+        self.ups.pb1c.connect(self.changeint)
+
+    def changeint(self,sf,num):
+        sf.setValue(int(num))
 
     # 输出重写
     def write(self,message):
@@ -305,14 +314,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # 函数：进度条回调，计算当前上传的百分比
     def upload_percentage(self, consumed_bytes, total_bytes):
         # 进度条回调函数，计算当前上传的百分比
-        def run():
-            self.PB1.setValue(rate)
-
         if total_bytes:
             rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
             print(rate)
-            r = Thread(target=run)
-            r.start()
+            self.ups.pb1c.emit(self.PB1,int(rate))
 
     # 搬来的上传文件函数
     def uploadfile(self,filepathall,isallfak):
