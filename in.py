@@ -14,15 +14,13 @@ import os
 import sys
 import linecache
 import atexit
+from threading import Thread
 import logging
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from qcloud_cos import CosServiceError
 from qcloud_cos import CosClientError
-import tkinter as tk
-from tkinter import filedialog
 from faker import Faker
-from tqdm import tqdm
 import os
 from Encryptor import enc
 from PyQt5 import QtCore, QtGui, QtWidgets, Qt
@@ -308,7 +306,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             sys.stdout.flush()
 
     # 搬来的上传文件函数
-    def uploadfile(self,filepathall):
+    def uploadfile(self,filepathall,isallfak):
         global timex
         global address
         global addressl
@@ -316,6 +314,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             ##### -----1.连接桶部分-----#####
             logging.basicConfig(level=logging.INFO, stream=sys.stdout)  # 输出日志，可以去掉qwq
             print("开始上传...")
+            # stream=self.TB2_output.append()
             config = CosConfig(Region=a_key[4], SecretId=a_key[2],
                                SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
             client = CosS3Client(config)
@@ -324,14 +323,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             fileext = filename
             (path, filename) = os.path.split(filepathall)
             filepath0 = path
+
             ##### -----3.询问随机文件名-----#####
-            isallfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）", QMessageBox.Yes | QMessageBox.No)
             if isallfak != 65536:
                 filename = f.pystr() + fileext
             # addressl[timex] = filepathall
+
             ##### -----4.判断桶种有无重名项（跳过）-----#####
             ##### -----5.开始上传-----#####
+
             print("开始上传啦~")
+            # 主要的上传函数
             self.response = client.upload_file(
                 Bucket=bucketx,
                 Key=filename,
@@ -359,7 +361,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         bucketx=(self.CB1_bucket.currentText())
         if isok == 1:
             # 可以上传
-            self.uploadfile(filepath[0])
+            # 询问用户名移到这里
+            isallfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
+                                            QMessageBox.Yes | QMessageBox.No)
+            self.uploadfile(filepath[0],isallfak)
 
 
 if __name__ == "__main__":
