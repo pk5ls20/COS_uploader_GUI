@@ -33,6 +33,7 @@ from typing import List, Union
 f = Faker(locale='zh_CN')
 a_key: List[Union[int, str]] = [0] * 1000
 a_pas = ''
+fileaddress = [0]*1
 filepath = [0]*10000
 isok = 0
 
@@ -44,12 +45,14 @@ class updatex(QObject):
 
 # 重制TextBrowser为拖拽作准备
 class MyTB(QTextBrowser):
+    global fileaddress
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
-        filepath[0] = (event.mimeData().urls()[0].toLocalFile())
+        fileaddress[0] = (event.mimeData().urls()[0].toLocalFile())
+        # print(fileaddress[0])
 
 
 # 加载主窗口
@@ -261,6 +264,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     # 事件：切换到参数窗口
     def judgepath(self,path):
+        # 0文件夹 1文件
         if os.path.isdir(path):
             return 0
         elif os.path.isfile(path):
@@ -339,7 +343,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.ups.pb1c.emit(self.PB1,int(rate))
 
     # 搬来的上传文件函数
-    def uploadfile(self,filepathall,isallfak):
+    def uploadfile(self,filepathall,isfak):
         global timex
         global address
         global addressl
@@ -358,14 +362,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             filepath0 = path
 
             ##### -----3.询问随机文件名-----#####
-            if isallfak != 65536:
+            if isfak != 65536:
                 filename = f.pystr() + fileext
             # addressl[timex] = filepathall
 
             ##### -----4.判断桶种有无重名项（跳过）-----#####
             ##### -----5.开始上传-----#####
 
-            self.statusbar.showMessage('开始上传啦~')
+            self.statusbar.showMessage('开始上传'+filepathall+'啦~',5)
             # 主要的上传函数
             self.response = client.upload_file(
                 Bucket=bucketx,
@@ -375,7 +379,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 progress_callback=self.upload_percentage
             )
             ##### -----6.总结-----#####
-            self.statusbar.showMessage('上传成功！')
+            self.statusbar.showMessage(filepathall + '上传成功！',5)
             """
             if lib == 1:
                 address[timex] = 'https://' + a_key[3] + '.cos.' + a_key[2] + '.myqcloud.com/' + filename
@@ -389,17 +393,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     # 事件：点击B1
     def click_B1(self):
+        global fileaddress
         global bucketx
+        global isallfak
         # 检验环境变量是否存在
         bucketx=(self.CB1_bucket.currentText())
         if isok == 1:
-            # 可以上传
-            # 询问用户名移到这里
-            isallfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
-                                            QMessageBox.Yes | QMessageBox.No)
-            thread = Thread(target=self.uploadfile,
-                            args=(filepath[0],isallfak))
-            thread.start()
+            # 可以上传，先看路径是文件还是文件夹
+            if self.judgepath(fileaddress[0]) == 1:
+                # 询问用户名移到这里
+                isfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
+                                                QMessageBox.Yes | QMessageBox.No)
+                thread = Thread(target=self.uploadfile,
+                                args=(fileaddress[0],isfak))
+                thread.start()
+            elif self.judgepath(fileaddress[0]) == 0:
+                # 文件夹上传部分
+                isfak = QMessageBox.question(self, "COS_uploader", "是否全部使用随机文件名？（建议图床使用）",
+                                                QMessageBox.Yes | QMessageBox.No)
+                g = os.walk(str(fileaddress[0]))
+                for path , dir_list , file_list in g:
+                    for file_name in file_list:
+                        filepathall = str(fileaddress[0]) + "/" + file_name
+                        print("当前上传"+filepathall)
+                        thread = Thread(target=self.uploadfile,
+                                        args=(filepathall, isfak))
+                        thread.start()
+        else:
+            QMessageBox.warning(self, "警告", "参数未加载")
+
 
 
 if __name__ == "__main__":
