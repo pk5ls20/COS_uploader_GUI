@@ -230,6 +230,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.B1_upload.clicked.connect(self.click_B1)
         self.B2_clearall.clicked.connect(self.click_B2)
         self.CB3_2_save.clicked.connect(self.click_CB3_2)
+        self.B3_quebucket.clicked.connect(self.quemessage)
+        self.B3_save.clicked.connect(self.click_B3_save)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         logging.debug("槽函数编写完成")
@@ -289,6 +291,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             logging.debug("judgepath=1")
             return 1
 
+    def quemessage(self):
+        QMessageBox.information(self, "Bucket", "可以写入一个或多个Bucket，中间用英文分号分割哦")
     def tabchange(self):
         global a_key
         global a_pas
@@ -301,6 +305,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 logging.info("self.LB3_1_now_load.setText('请创建/打开一个参数文件！')")
                 self.LB3_1_now_load.setText('请创建/打开一个参数文件！')
                 self.LB3_1_loadfilename.setText('')
+
+    def click_B3_save(self):
+        fx = open("SAVECOS.secret", "w")
+        # 这之前要统计一下有多少个bucket
+        fx.write(str(len((self.LE3_bucket.text()).split(';')))+"\n")
+        logging.debug('开始写入！'+str(len((self.LE3_bucket.text()).split(';')))+"/"+self.LE3_mykey.text())
+        logging.debug(self.LE3_sid.text()+'/'+self.LE3_skey.text()+'/'+self.LE3_region.text()+'/'+self.LE3_bucket.text())
+        fx.write(self.LE3_mykey.text()+"\n")
+        fx.write(self.LE3_sid.text()+"\n")
+        fx.write(self.LE3_skey.text()+"\n")
+        fx.write(self.LE3_region.text()+"\n")
+        fx.write(self.LE3_bucket.text()+"\n")
+        fx.close()
+        enc.encrypt_file('SAVECOS.secret')
+        logging.info('写入SAVECOS.secret.enc成功')
+        QMessageBox.information(self, "COS_uploader", "写入SAVECOS.secret.enc成功")
+
 
     def click_CB3_2(self):
         # 输出日志事件
