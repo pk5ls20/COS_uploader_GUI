@@ -37,6 +37,7 @@ fileaddress = [0] * 1
 filepath = [0] * 10000
 isok = 0
 loglevel = 0
+timex = 0
 logging.basicConfig(filename="test1.log", filemode="w",
                     format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
                     datefmt="%d-%M-%Y %H:%M:%S", level=logging.DEBUG)
@@ -442,14 +443,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             ##### -----6.总结-----#####
             self.statusbar.showMessage(filepathall + '上传成功！', 5)
             logging.info(str(filepathall) + '上传成功！')
-            """
-            if lib == 1:
-                address[timex] = 'https://' + a_key[3] + '.cos.' + a_key[2] + '.myqcloud.com/' + filename
-                timex = timex + 1
-            if lib == 2:
-                address[timex] = 'https://' + a_key[4] + '.cos.' + a_key[2] + '.myqcloud.com/' + filename
-                timex = timex + 1
-            """
+            # join
+            self.TB2_output.append('https://' + bucketx + '.cos.' + a_key[4] + '.myqcloud.com/' + filename)
         except (CosServiceError, CosClientError):
             self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
             logging.info('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
@@ -459,7 +454,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         global fileaddress
         global bucketx
         global isallfak
-        # 检验环境变量是否存在
+        # 检验环境变量是否存在，不要忘了bucketx是桶名
         bucketx = (self.CB1_bucket.currentText())
         logging.debug('bucketx='+str(bucketx))
         if isok == 1:
