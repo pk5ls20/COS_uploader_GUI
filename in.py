@@ -36,6 +36,9 @@ a_pas = ''
 filepath = [0]*10000
 isok = 0
 
+class statuschange(QObject):
+    sc = Signal(QStatusBar,str)
+
 class updatex(QObject):
     pb1c = Signal(QProgressBar,int)
 
@@ -46,8 +49,9 @@ class MyTB(QTextBrowser):
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
-        filepath[0]=(event.mimeData().urls()[0].toLocalFile())
-        print(filepath[0])
+        filepath[0] = (event.mimeData().urls()[0].toLocalFile())
+
+
 # 加载主窗口
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
@@ -71,8 +75,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(378, 297)
-        MainWindow.setMaximumSize(QtCore.QSize(434, 325))
+        MainWindow.resize(378, 275)
+        MainWindow.setMaximumSize(QtCore.QSize(378, 275))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.tabWeiget_main = QtWidgets.QTabWidget(self.centralwidget)
@@ -104,9 +108,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.B1_upload.setGeometry(QtCore.QRect(250, 150, 75, 23))
         self.B1_upload.setObjectName("B1_upload")
         self.B1_upload.setEnabled(False)
-        self.lb1l_status = QtWidgets.QLabel(self.select)
-        self.lb1l_status.setGeometry(QtCore.QRect(10, 210, 171, 16))
-        self.lb1l_status.setObjectName("lb1l_status")
+        # self.lb1l_status = QtWidgets.QLabel(self.select)
+        # self.lb1l_status.setGeometry(QtCore.QRect(10, 210, 171, 16))
+        # self.lb1l_status.setObjectName("lb1l_status")
         self.tabWeiget_main.addTab(self.select, "")
         self.output = QtWidgets.QWidget()
         self.output.setObjectName("output")
@@ -201,6 +205,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        # self.statusbar.showMessage('Test Message')
         self.tabWeiget_main.setCurrentIndex(0)
 
         # 初始化槽函数
@@ -225,7 +230,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                          "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'SimHei\';\">将文件拖拽到此处，或 </span><span style=\" font-family:\'SimHei\'; font-weight:600; color:#00007f;\">点击上传</span></p></body></html>"))
         self.Lb1_uploadto.setText(_translate("MainWindow", "上传至："))
         self.B1_upload.setText(_translate("MainWindow", "开始上传"))
-        self.lb1l_status.setText(_translate("MainWindow", "等待加载参数..."))
+        self.statusbar.showMessage('等待加载参数...')
         self.tabWeiget_main.setTabText(self.tabWeiget_main.indexOf(self.select), _translate("MainWindow", "上传"))
         self.CB2_isautoclear.setText(_translate("MainWindow", "自动清空"))
         self.B2_clearall.setText(_translate("MainWindow", "清空"))
@@ -255,6 +260,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                        _translate("MainWindow", "参数配置"))
 
     # 事件：切换到参数窗口
+    def judgepath(self,path):
+        if os.path.isdir(path):
+            return 0
+        elif os.path.isfile(path):
+            return 1
+
     def tabchange(self):
         global a_key
         global a_pas
@@ -299,7 +310,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.LE3_bucket.setText(str(a_key[5]))
                     isok = 1
                     QMessageBox.information(self, "提示", "参数加载成功！")
-                    self.lb1l_status.setText('参数加载成功')
+                    self.statusbar.showMessage('参数加载成功！')
                     self.B1_upload.setEnabled(True)
                     # 将参数加载到第一页的选择库栏
                     # 首先将bucket分割，后赋值给a_key
@@ -313,8 +324,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.CB1_bucket.addItems(list1)
                 else:
                     QMessageBox.warning(self, "注意", "Mykey校验未通过，请重新输入！", QMessageBox.Cancel)
+                    self.statusbar.showMessage('Mykey校验未通过，请重新输入！')
             else:
                 QMessageBox.warning(self, "警告", "请选择文件", QMessageBox.Cancel)
+                self.statusbar.showMessage('请选择文件！')
     # 尝试用双多线程改写
 
     # 函数：进度条回调，计算当前上传的百分比
@@ -333,7 +346,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         try:
             ##### -----1.连接桶部分-----#####
             logging.basicConfig(level=logging.INFO, stream=sys.stdout)  # 输出日志，可以去掉qwq
-            print("开始上传...")
+            self.statusbar.showMessage('开始上传！')
             # stream=self.TB2_output.append()
             config = CosConfig(Region=a_key[4], SecretId=a_key[2],
                                SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
@@ -352,7 +365,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             ##### -----4.判断桶种有无重名项（跳过）-----#####
             ##### -----5.开始上传-----#####
 
-            print("开始上传啦~")
+            self.statusbar.showMessage('开始上传啦~')
             # 主要的上传函数
             self.response = client.upload_file(
                 Bucket=bucketx,
@@ -362,7 +375,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 progress_callback=self.upload_percentage
             )
             ##### -----6.总结-----#####
-            print("上传成功！")
+            self.statusbar.showMessage('上传成功！')
             """
             if lib == 1:
                 address[timex] = 'https://' + a_key[3] + '.cos.' + a_key[2] + '.myqcloud.com/' + filename
@@ -372,7 +385,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 timex = timex + 1
             """
         except (CosServiceError, CosClientError):
-            print("上传COS中出现异常\n请确定参数是否正确以及网络是否畅通\n程序即将退出！")
+            self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
 
     # 事件：点击B1
     def click_B1(self):
