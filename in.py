@@ -26,33 +26,43 @@ from Encryptor import enc
 from PyQt5 import QtCore, QtGui, QtWidgets, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
-from PySide2.QtCore import Signal,QObject
+from PySide2.QtCore import Signal, QObject
 from typing import List, Union
 
 # 初始化变量
 f = Faker(locale='zh_CN')
 a_key: List[Union[int, str]] = [0] * 1000
 a_pas = ''
-fileaddress = [0]*1
-filepath = [0]*10000
+fileaddress = [0] * 1
+filepath = [0] * 10000
 isok = 0
-
+loglevel = 0
+logging.basicConfig(filename="test1.log", filemode="w",
+                    format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
+                    datefmt="%d-%M-%Y %H:%M:%S", level=logging.DEBUG)
+logging.debug("初始化变量完成！")
+# 设置日志等级
 class statuschange(QObject):
-    sc = Signal(QStatusBar,str)
+    sc = Signal(QStatusBar, str)
+
 
 class updatex(QObject):
-    pb1c = Signal(QProgressBar,int)
+    pb1c = Signal(QProgressBar, int)
+
 
 # 重制TextBrowser为拖拽作准备
 class MyTB(QTextBrowser):
     global fileaddress
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
         fileaddress[0] = (event.mimeData().urls()[0].toLocalFile())
+        logging.debug('Now Dragpath is ' + str(fileaddress[0]))
         # print(fileaddress[0])
+    logging.debug("TextBrowser拖拽重写完成！")
 
 
 # 加载主窗口
@@ -69,12 +79,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.ups = updatex()
         self.ups.pb1c.connect(self.changeint)
 
-    def changeint(self,sf,num):
+    def changeint(self, sf, num):
         sf.setValue(int(num))
+        # logging.debug('changeint/sf/num'+str(sf)+str(num))
 
     # 输出重写
-    def write(self,message):
-        self.TB2_output.append(message)
+    def write(self, message):
+        logging.info(message)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -210,14 +221,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         MainWindow.setStatusBar(self.statusbar)
         # self.statusbar.showMessage('Test Message')
         self.tabWeiget_main.setCurrentIndex(0)
+        logging.debug("窗口绘制完毕")
 
         # 初始化槽函数
         self.tabWeiget_main.currentChanged.connect(self.tabchange)
         self.B3_load.clicked.connect(self.click_B3)
         self.B1_upload.clicked.connect(self.click_B1)
         self.B2_clearall.clicked.connect(self.click_B2)
+        self.CB3_2_save.clicked.connect(self.click_CB3_2)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        logging.debug("槽函数编写完成")
 
     # 绘制UI
     def retranslateUi(self, MainWindow):
@@ -258,50 +272,81 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.CB3_2_loglevel.setItemText(0, _translate("MainWindow", "0-简单"))
         self.CB3_2_loglevel.setItemText(1, _translate("MainWindow", "1-基本"))
         self.CB3_2_loglevel.setItemText(2, _translate("MainWindow", "2-详细"))
+        self.CB3_2_loglevel.setCurrentIndex(1)
         self.CB3_2_save.setText(_translate("MainWindow", "Save"))
         self.tabWeiget_main.setTabText(self.tabWeiget_main.indexOf(self.secret),
                                        _translate("MainWindow", "参数配置"))
+        logging.debug("UI重绘完成")
 
     # 事件：切换到参数窗口
-    def judgepath(self,path):
+    def judgepath(self, path):
         # 0文件夹 1文件
         if os.path.isdir(path):
+            logging.debug("judgepath=0")
             return 0
         elif os.path.isfile(path):
+            logging.debug("judgepath=1")
             return 1
 
     def tabchange(self):
         global a_key
         global a_pas
+        global setlevel
+        logging.debug("Tabchange!")
         # 初始化页面
         if self.tabWeiget_main.currentIndex() == 2:
             # 把之前的writeio拆开写，当存在文件时
             if a_key[0] == 0 or a_pas == '':  # 不存在变量
+                logging.info("self.LB3_1_now_load.setText('请创建/打开一个参数文件！')")
                 self.LB3_1_now_load.setText('请创建/打开一个参数文件！')
                 self.LB3_1_loadfilename.setText('')
+
+    def click_CB3_2(self):
+        # 输出日志事件
+        global loglevel
+        if self.CB3_2_islog.isChecked() == True:
+            logger = logging.getLogger()
+            if self.CB3_2_loglevel.currentIndex() == 0:
+                logger.setLevel(logging.ERROR)
+                loglevel = 0
+            if self.CB3_2_loglevel.currentIndex() == 1:
+                logger.setLevel(logging.INFO)
+                loglevel = 1
+            if self.CB3_2_loglevel.currentIndex() == 2:
+                logger.setLevel(logging.DEBUG)
+                loglevel = 2
+        logging.debug('日志事件创建完成！等级'+str(loglevel))
+        QMessageBox.information(self, "提示", '参数' + str(loglevel) + '保存成功！')
+        logging.info(str(loglevel) + '保存成功！')
 
     # 事件：点击B3
     def click_B2(self):
         self.TB2_output.clear()
+        logging.debug("CLEAR!")
 
     def click_B3(self):
         global isok
         COSfilename_e, fd = QFileDialog.getOpenFileName(self, '选择一个py文件', './',
                                                         '参数文件(*.secret.enc)', '参数文件(*.secret.enc)')
         if self.LE3_mykey.text() == '':  # 用户没有输入Mykey，弹窗提醒输入
+            logging.info("Lost MyKey")
             QMessageBox.warning(self, "警告", "请输入MyKey！", QMessageBox.Cancel)
         else:
             if COSfilename_e != '':
                 enc.decrypt_file(COSfilename_e)
+                logging.debug('decryptd'+str(COSfilename_e))
                 # writein COS.secret in a_key
                 # 这块要重写
                 COSfilename = COSfilename_e[:-4]
+                logging.debug('COSfilename='+str(COSfilename))
                 with open(COSfilename, 'r', encoding='UTF-8') as file:
                     time_cos = 0
                     for line in file:
                         a_key[time_cos] = line.strip()
+                        logging.debug('分割原始参数中，a_key[time_cos]'+str(a_key[time_cos])+str(time_cos))
                         time_cos = time_cos + 1
                 enc.encrypt_file(COSfilename)
+                logging.debug('decryptd'+str(COSfilename))
                 # 到此步，已将COS.secret加载到变量中，下一步开始比对密码值
                 if self.LE3_mykey.text() == a_key[1]:  # 密码正确
                     # 开始加载变量
@@ -315,6 +360,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     isok = 1
                     QMessageBox.information(self, "提示", "参数加载成功！")
                     self.statusbar.showMessage('参数加载成功！')
+                    logging.info("参数加载成功！")
                     self.B1_upload.setEnabled(True)
                     # 将参数加载到第一页的选择库栏
                     # 首先将bucket分割，后赋值给a_key
@@ -323,15 +369,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     for i in list1:
                         a_key[timel] = i
                         timel = timel + 1
-                        print("ok")
+                        logging.debug('开始转移参数'+str(timel))
                     # 进行一个参数的加载
                     self.CB1_bucket.addItems(list1)
+                    logging.debug("参数已全部加载")
                 else:
                     QMessageBox.warning(self, "注意", "Mykey校验未通过，请重新输入！", QMessageBox.Cancel)
                     self.statusbar.showMessage('Mykey校验未通过，请重新输入！')
+                    logging.info("Mykey校验未通过，请重新输入！")
             else:
                 QMessageBox.warning(self, "警告", "请选择文件", QMessageBox.Cancel)
                 self.statusbar.showMessage('请选择文件！')
+                logging.info("警告, 请选择文件")
+
     # 尝试用双多线程改写
 
     # 函数：进度条回调，计算当前上传的百分比
@@ -339,37 +389,48 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # 进度条回调函数，计算当前上传的百分比
         if total_bytes:
             rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
-            print(rate)
-            self.ups.pb1c.emit(self.PB1,int(rate))
+            logging.debug('回传进度Rate='+str(rate))
+            self.ups.pb1c.emit(self.PB1, int(rate))
+            logging.debug("发送信号Rate")
 
     # 搬来的上传文件函数
-    def uploadfile(self,filepathall,isfak):
+    def uploadfile(self, filepathall, isfak):
         global timex
         global address
         global addressl
         try:
             ##### -----1.连接桶部分-----#####
-            logging.basicConfig(level=logging.INFO, stream=sys.stdout)  # 输出日志，可以去掉qwq
+            logging.debug('上传文件：loglevel='+ str(loglevel))
+            if loglevel == 1:
+                logging.basicConfig(level=logging.INFO, stream=sys.stdout)  # 输出日志，可以去掉qwq
+            if loglevel == 2:
+                logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
             self.statusbar.showMessage('开始上传！')
+            logging.info("开始上传")
             # stream=self.TB2_output.append()
             config = CosConfig(Region=a_key[4], SecretId=a_key[2],
                                SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
+            logging.debug(str(a_key[4])+'/'+str(a_key[2])+'/'+str(a_key[3]))
             client = CosS3Client(config)
             ##### -----2.引入分割文件名os-----#####
             (ext, filename) = os.path.splitext(filepathall)
             fileext = filename
+            logging.debug('fileext=' + str(fileext))
             (path, filename) = os.path.split(filepathall)
             filepath0 = path
+            logging.debug('path=' + str(path))
 
             ##### -----3.询问随机文件名-----#####
             if isfak != 65536:
                 filename = f.pystr() + fileext
+                logging.debug('filename=' + str(filename))
             # addressl[timex] = filepathall
 
             ##### -----4.判断桶种有无重名项（跳过）-----#####
             ##### -----5.开始上传-----#####
 
-            self.statusbar.showMessage('开始上传'+filepathall+'啦~',5)
+            self.statusbar.showMessage('开始上传' + filepathall + '啦~', 5)
+            logging.info('开始上传' + str(filepathall) + '啦~')
             # 主要的上传函数
             self.response = client.upload_file(
                 Bucket=bucketx,
@@ -379,7 +440,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 progress_callback=self.upload_percentage
             )
             ##### -----6.总结-----#####
-            self.statusbar.showMessage(filepathall + '上传成功！',5)
+            self.statusbar.showMessage(filepathall + '上传成功！', 5)
+            logging.info(str(filepathall) + '上传成功！')
             """
             if lib == 1:
                 address[timex] = 'https://' + a_key[3] + '.cos.' + a_key[2] + '.myqcloud.com/' + filename
@@ -390,6 +452,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             """
         except (CosServiceError, CosClientError):
             self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
+            logging.info('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
 
     # 事件：点击B1
     def click_B1(self):
@@ -397,35 +460,39 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         global bucketx
         global isallfak
         # 检验环境变量是否存在
-        bucketx=(self.CB1_bucket.currentText())
+        bucketx = (self.CB1_bucket.currentText())
+        logging.debug('bucketx='+str(bucketx))
         if isok == 1:
             # 可以上传，先看路径是文件还是文件夹
             if self.judgepath(fileaddress[0]) == 1:
                 # 询问用户名移到这里
                 isfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
-                                                QMessageBox.Yes | QMessageBox.No)
+                                             QMessageBox.Yes | QMessageBox.No)
                 thread = Thread(target=self.uploadfile,
-                                args=(fileaddress[0],isfak))
+                                args=(fileaddress[0], isfak))
+                logging.debug('子进程uploadfile开始'+str(fileaddress[0])+'/'+str(isfak))
                 thread.start()
             elif self.judgepath(fileaddress[0]) == 0:
                 # 文件夹上传部分
                 isfak = QMessageBox.question(self, "COS_uploader", "是否全部使用随机文件名？（建议图床使用）",
-                                                QMessageBox.Yes | QMessageBox.No)
+                                             QMessageBox.Yes | QMessageBox.No)
                 g = os.walk(str(fileaddress[0]))
-                for path , dir_list , file_list in g:
+                for path, dir_list, file_list in g:
                     for file_name in file_list:
                         filepathall = str(fileaddress[0]) + "/" + file_name
-                        print("当前上传"+filepathall)
+                        self.statusbar.showMessage("当前上传" + filepathall)
+                        logging.info('当前上传'+ str(filepathall))
                         thread = Thread(target=self.uploadfile,
                                         args=(filepathall, isfak))
+                        logging.debug('子进程uploadfile开始' + str(filepathall) + '/' + str(isfak))
                         thread.start()
         else:
             QMessageBox.warning(self, "警告", "参数未加载")
-
-
+            logging.info('警告：参数未加载')
 
 if __name__ == "__main__":
     import sys
+
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
