@@ -457,6 +457,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # 检验环境变量是否存在，不要忘了bucketx是桶名
         bucketx = (self.CB1_bucket.currentText())
         logging.debug('bucketx='+str(bucketx))
+        # 处理前面的自动清除
+        if self.CB2_isautoclear.isChecked():
+            self.TB2_output.clear()
         if isok == 1:
             # 可以上传，先看路径是文件还是文件夹
             if self.judgepath(fileaddress[0]) == 1:
