@@ -195,13 +195,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.groupBox_2.setGeometry(QtCore.QRect(0, 180, 361, 51))
         self.groupBox_2.setObjectName("groupBox_2")
         self.CB3_2_israndomname = QtWidgets.QCheckBox(self.groupBox_2)
-        self.CB3_2_israndomname.setGeometry(QtCore.QRect(20, 20, 103, 23))
+        self.CB3_2_israndomname.setGeometry(QtCore.QRect(21, 24, 128, 16))
         self.CB3_2_israndomname.setObjectName("CB3_2_israndomname")
         self.CB3_2_islog = QtWidgets.QCheckBox(self.groupBox_2)
-        self.CB3_2_islog.setGeometry(QtCore.QRect(130, 23, 68, 16))
+        self.CB3_2_islog.setGeometry(QtCore.QRect(155, 24, 68, 16))
         self.CB3_2_islog.setObjectName("CB3_2_islog")
         self.CB3_2_loglevel = QtWidgets.QComboBox(self.groupBox_2)
-        self.CB3_2_loglevel.setGeometry(QtCore.QRect(201, 22, 60, 19))
+        self.CB3_2_loglevel.setGeometry(QtCore.QRect(229, 23, 60, 19))
         self.CB3_2_loglevel.setEditable(False)
         self.CB3_2_loglevel.setDuplicatesEnabled(False)
         self.CB3_2_loglevel.setObjectName("CB3_2_loglevel")
@@ -209,7 +209,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.CB3_2_loglevel.addItem("")
         self.CB3_2_loglevel.addItem("")
         self.CB3_2_save = QtWidgets.QPushButton(self.groupBox_2)
-        self.CB3_2_save.setGeometry(QtCore.QRect(266, 22, 71, 21))
+        self.CB3_2_save.setGeometry(QtCore.QRect(300, 22, 51, 21))
         self.CB3_2_save.setObjectName("CB3_2_save")
         self.tabWeiget_main.addTab(self.secret, "")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -239,7 +239,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # 绘制UI
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader"))
         self.TB1_main.setHtml(_translate("MainWindow",
                                          "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
                                          "<html><head><meta name=\"qrichtext\" content=\"1\" /><title>设置一个居中的图片</title><style type=\"text/css\">\n"
@@ -270,12 +270,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.LB3_1_now_load.setText(_translate("MainWindow", "当前加载为："))
         self.B3_quebucket.setText(_translate("MainWindow", "?"))
         self.groupBox_2.setTitle(_translate("MainWindow", "Profile"))
-        self.CB3_2_israndomname.setText(_translate("MainWindow", "随机文件名上传"))
+        self.CB3_2_israndomname.setText(_translate("MainWindow", "强力随机文件名上传"))
         self.CB3_2_islog.setText(_translate("MainWindow", "输出日志"))
         self.CB3_2_loglevel.setItemText(0, _translate("MainWindow", "0-简单"))
         self.CB3_2_loglevel.setItemText(1, _translate("MainWindow", "1-基本"))
         self.CB3_2_loglevel.setItemText(2, _translate("MainWindow", "2-详细"))
         self.CB3_2_loglevel.setCurrentIndex(1)
+        self.CB3_2_islog.setChecked(True)
         self.CB3_2_save.setText(_translate("MainWindow", "Save"))
         self.tabWeiget_main.setTabText(self.tabWeiget_main.indexOf(self.secret),
                                        _translate("MainWindow", "参数配置"))
@@ -301,7 +302,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # 初始化页面
         if self.tabWeiget_main.currentIndex() == 2:
             # 把之前的writeio拆开写，当存在文件时
-            if a_key[0] == 0 or a_pas == '':  # 不存在变量
+            if a_key[0] == 0:  # 不存在变量
                 logging.info("self.LB3_1_now_load.setText('请创建/打开一个参数文件！')")
                 self.LB3_1_now_load.setText('请创建/打开一个参数文件！')
                 self.LB3_1_loadfilename.setText('')
@@ -485,16 +486,24 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             # 可以上传，先看路径是文件还是文件夹
             if self.judgepath(fileaddress[0]) == 1:
                 # 询问用户名移到这里
-                isfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
-                                             QMessageBox.Yes | QMessageBox.No)
+                if self.CB3_2_israndomname.isChecked()==True:
+                    isfak = 114514
+                    logging.debug('已强制上传随机文件名！')
+                else:
+                    isfak = QMessageBox.question(self, "COS_uploader", "是否使用随机文件名？（建议图床使用）",
+                                                 QMessageBox.Yes | QMessageBox.No)
                 thread = Thread(target=self.uploadfile,
                                 args=(fileaddress[0], isfak))
                 logging.debug('子进程uploadfile开始'+str(fileaddress[0])+'/'+str(isfak))
                 thread.start()
             elif self.judgepath(fileaddress[0]) == 0:
                 # 文件夹上传部分
-                isfak = QMessageBox.question(self, "COS_uploader", "是否全部使用随机文件名？（建议图床使用）",
-                                             QMessageBox.Yes | QMessageBox.No)
+                if self.CB3_2_israndomname.isChecked()==True:
+                    isfak = 114514
+                    logging.debug('已强制所有文件全部上传随机文件名！')
+                else:
+                    isfak = QMessageBox.question(self, "COS_uploader", "是否全部使用随机文件名？（建议图床使用）",
+                                                 QMessageBox.Yes | QMessageBox.No)
                 g = os.walk(str(fileaddress[0]))
                 for path, dir_list, file_list in g:
                     for file_name in file_list:
@@ -511,8 +520,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     import sys
-
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling) # 高分屏匹配
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
