@@ -551,8 +551,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def click_B1(self):
         global fileaddress
         global bucketx
+        global filer
         global filename_list
         global filename_rd
+        filer = 0
         # 检验环境变量是否存在，不要忘了bucketx是桶名
         bucketx = (self.CB1_bucket.currentText())
         logging.debug('bucketx=' + str(bucketx))
@@ -610,7 +612,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         thread = Thread(target=self.isfilerp_check,
                                         args=(bucketx, filename_list[i], i))
                         logging.debug('多线程：子进程isfilerp开始' + str(bucketx) + '///' + str(filename_list[int(i)]))
-                        
                         thread.start()
                         # 程序停止等待进程结束
                         thread.join()
