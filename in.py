@@ -16,6 +16,7 @@ import os
 import sys
 import linecache
 import atexit
+import traceback
 from threading import Thread
 import logging
 from qcloud_cos import CosConfig
@@ -50,7 +51,7 @@ loglevel = 0
 timex = 0
 logging.basicConfig(filename="test1.log", filemode="w",
                     format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
-                    datefmt="%d-%M-%Y %H:%M:%S", level=logging.DEBUG)
+                    datefmt="%d-%M-%Y %H:%M:%S", level=logging.INFO)
 logging.debug("初始化变量完成！")
 
 
@@ -92,6 +93,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         sys.stdout = self
         self.ups = updatex()
         self.ups.pb1c.connect(self.changeint)
+        self.old_hook = sys.excepthook
+        sys.excepthook = self.catch_exceptions
+
+    def catch_exceptions(self, t,v,tb):
+        logging.critical(t)
+        logging.critical(v)
+        logging.critical(tb)
+        QMessageBox.warning(self,'警告','程序出现严重错误，请重新打开！')
 
     def changeint(self, sf, num):
         sf.setValue(int(num))
@@ -260,7 +269,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                          "</style></head><body style=\" font-family:\'SimSun\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
                                          "<p align=\"center\" style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'SimHei\';\"><br /></p>\n"
                                          "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/pic/in.svg\" width=\"120\" height=\"80\" /><span style=\" font-family:\'SimHei\';\"> </span></p>\n"
-                                         "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'SimHei\';\">将文件拖拽到此处，或 </span><span style=\" font-family:\'SimHei\'; font-weight:600; color:#00007f;\">点击上传</span></p></body></html>"))
+                                         "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'SimHei\';\">将文件或文件夹拖拽到此处</span></p></body></html>"))
         self.Lb1_uploadto.setText(_translate("MainWindow", "上传至："))
         self.B1_upload.setText(_translate("MainWindow", "开始上传"))
         self.statusbar.showMessage('等待加载参数...')
@@ -322,21 +331,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.LB3_1_loadfilename.setText('')
 
     def click_B3_save(self):
-        fx = open("SAVECOS.secret", "w")
-        # 这之前要统计一下有多少个bucket
-        fx.write(str(len((self.LE3_bucket.text()).split(';'))) + "\n")
-        logging.debug('开始写入！' + str(len((self.LE3_bucket.text()).split(';'))) + "/" + self.LE3_mykey.text())
-        logging.debug(
-            self.LE3_sid.text() + '/' + self.LE3_skey.text() + '/' + self.LE3_region.text() + '/' + self.LE3_bucket.text())
-        fx.write(self.LE3_mykey.text() + "\n")
-        fx.write(self.LE3_sid.text() + "\n")
-        fx.write(self.LE3_skey.text() + "\n")
-        fx.write(self.LE3_region.text() + "\n")
-        fx.write(self.LE3_bucket.text() + "\n")
-        fx.close()
-        enc.encrypt_file('SAVECOS.secret')
-        logging.info('写入SAVECOS.secret.enc成功')
-        QMessageBox.information(self, "COS_uploader", "写入SAVECOS.secret.enc成功")
+        try:
+            fx = open("SAVECOS.secret", "w")
+            # 这之前要统计一下有多少个bucket
+            fx.write(str(len((self.LE3_bucket.text()).split(';'))) + "\n")
+            logging.debug('开始写入！' + str(len((self.LE3_bucket.text()).split(';'))) + "/" + self.LE3_mykey.text())
+            logging.debug(
+                self.LE3_sid.text() + '/' + self.LE3_skey.text() + '/' + self.LE3_region.text() + '/' + self.LE3_bucket.text())
+            fx.write(self.LE3_mykey.text() + "\n")
+            fx.write(self.LE3_sid.text() + "\n")
+            fx.write(self.LE3_skey.text() + "\n")
+            fx.write(self.LE3_region.text() + "\n")
+            fx.write(self.LE3_bucket.text() + "\n")
+            fx.close()
+            enc.encrypt_file('SAVECOS.secret')
+            logging.info('写入SAVECOS.secret.enc成功')
+            QMessageBox.information(self, "COS_uploader", "写入SAVECOS.secret.enc成功")
+        except(IOError,TypeError):
+            QMessageBox.warning(self,'警告','在保存参数时出现了异常')
+            logging.error("在保存参数时出现了异常")
 
     def click_CB3_2(self):
         # 输出日志事件
@@ -364,26 +377,30 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def click_B3(self):
         global isok
-        COSfilename_e, fd = QFileDialog.getOpenFileName(self, '选择一个py文件', './',
+        COSfilename_e, fd = QFileDialog.getOpenFileName(self, '选择一个参数文件', './',
                                                         '参数文件(*.secret.enc)', '参数文件(*.secret.enc)')
         if self.LE3_mykey.text() == '':  # 用户没有输入Mykey，弹窗提醒输入
             logging.info("Lost MyKey")
             QMessageBox.warning(self, "警告", "请输入MyKey！", QMessageBox.Cancel)
         else:
             if COSfilename_e != '':
-                enc.decrypt_file(COSfilename_e)
-                logging.debug('decryptd' + str(COSfilename_e))
-                # writein COS.secret in a_key
-                # 这块要重写
-                COSfilename = COSfilename_e[:-4]
-                logging.debug('COSfilename=' + str(COSfilename))
-                with open(COSfilename, 'r', encoding='UTF-8') as file:
-                    time_cos = 0
-                    for line in file:
-                        a_key[time_cos] = line.strip()
-                        logging.debug('分割原始参数中，a_key[time_cos]' + str(a_key[time_cos]) + str(time_cos))
-                        time_cos = time_cos + 1
-                enc.encrypt_file(COSfilename)
+                try:
+                    enc.decrypt_file(COSfilename_e)
+                    logging.debug('decryptd' + str(COSfilename_e))
+                    # writein COS.secret in a_key
+                    # 这块要重写
+                    COSfilename = COSfilename_e[:-4]
+                    logging.debug('COSfilename=' + str(COSfilename))
+                    with open(COSfilename, 'r', encoding='UTF-8') as file:
+                        time_cos = 0
+                        for line in file:
+                            a_key[time_cos] = line.strip()
+                            logging.debug('分割原始参数中，a_key[time_cos]' + str(a_key[time_cos]) + str(time_cos))
+                            time_cos = time_cos + 1
+                    enc.encrypt_file(COSfilename)
+                except(IOError,ValueError):
+                    QMessageBox.warning(self,'警告','在加载参数时出现了异常')
+                    logging.error('在加载参数时出现了异常')
                 logging.debug('decryptd' + str(COSfilename))
                 # 到此步，已将COS.secret加载到变量中，下一步开始比对密码值
                 if self.LE3_mykey.text() == a_key[1]:  # 密码正确
@@ -447,7 +464,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
             logging.debug('COS上传参数'+ str(a_key[4]) + '/' + str(a_key[2]) + '/' + str(a_key[3]))
             client = CosS3Client(config)
-
             ##### -----2.开始上传-----#####
             self.statusbar.showMessage('开始上传' + upfilepath + '啦~', 5)
             logging.info('开始上传' + str(upfilepath) + '啦~')
@@ -459,43 +475,84 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 EnableMD5=False,
                 progress_callback=self.upload_percentage
             )
-            ##### -----6.总结-----#####
+            ##### -----3.总结-----#####
             self.statusbar.showMessage(upfilepath + '上传成功！', 5)
             logging.info(str(upfilepath) + '上传成功！')
             # join
-            self.TB2_output.append('https://' + bucketx + '.cos.' + a_key[4] + '.myqcloud.com/' + upfilename)
+            self.TB2_output.append(upfilepath+'的文件地址为'+'https://' + bucketx + '.cos.' + a_key[4] + '.myqcloud.com/' + upfilename)
+            self.TB2_output.append('\n')
         except (CosServiceError, CosClientError):
             self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
             logging.info('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
 
     def isfilerp_check(self, jbucket, jfilename, w):
-        # 可以开多线程，判断文件是否重复
-        # global filename
-        # global fileext
-        global filer
-        config = CosConfig(Region=a_key[4], SecretId=a_key[2],
-                           SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
-        logging.debug('在查找重复文件名线程中，参数加载完毕！')
-        client = CosS3Client(config)
-        response = client.object_exists(
-            Bucket=jbucket,
-            Key=jfilename)
-        logging.debug('开始判断文件' + jfilename + '有无重名？')
-        if response == True:  # 文件名重复
-            filename_rd[filer] = w
-            filename_r[w] = 114514
-            filer += 1
-            logging.debug('文件' + jfilename + '重名')
-        else:
-            logging.debug('文件' + jfilename + '没有重名')
+        try:
+            # 可以开多线程，判断文件是否重复
+            # global filename
+            # global fileext
+            global filer
+            config = CosConfig(Region=a_key[4], SecretId=a_key[2],
+                            SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
+            logging.debug('在查找重复文件名线程中，参数加载完毕！')
+            client = CosS3Client(config)
+            response = client.object_exists(
+                Bucket=jbucket,
+                Key=jfilename)
+            logging.debug('开始判断文件' + jfilename + '有无重名？')
+            if response == True:  # 文件名重复
+                filename_rd[filer] = w
+                filename_r[w] = 114514
+                filer += 1
+                logging.debug('文件' + jfilename + '重名')
+            else:
+                filename_r[w] = 0
+                logging.debug('文件' + jfilename + '没有重名')
+        except (CosServiceError, CosClientError):
+            self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
+            logging.info('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
 
     # 事件：点击B1
+    def userjudge(self,i):
+        # filename_list[filename_rd[i]]
+        logging.debug('文件' + filename_list[filename_rd[i]] + '重名!')
+        messageBox = QMessageBox()
+        messageBox.setWindowTitle('警告')
+        messageBox.setWindowIcon(QtGui.QIcon(":/pic/Warning.svg"))
+        # 来个图标
+        messageBox.setText(
+            '当前上传文件' + filename_list[filename_rd[i]] + '与库中原有文件重名，继续上传将覆盖原有文件，是否继续？')
+        messageBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+        buttonY = messageBox.button(QMessageBox.Yes)
+        buttonY.setText('忽略')
+        buttonN = messageBox.button(QMessageBox.No)
+        buttonN.setText('更改上传文件名')
+        buttonC = messageBox.button(QMessageBox.Cancel)
+        buttonC.setText('上传随机文件名')
+        messageBox.exec_()
+        logging.debug('点击了' + str(messageBox.clickedButton()))
+        # 分割文件名
+        (xfilename, xfileext) = os.path.splitext(filename_list[filename_rd[i]])
+        if messageBox.clickedButton() == buttonN:
+            textttt, ok = QInputDialog.getText(self, '提示', '文件名重复，请输入新的文件名（不含拓展名）')
+            if ok:
+                filenamep = textttt + xfileext
+            else:
+                QMessageBox.warning(self, "警告", "您未输入文件名，将上传随机文件名！")
+                filenamep = f.pystr() + xfileext
+            logging.debug('返回了文件名' + str(filenamep))
+        if messageBox.clickedButton() == buttonC:
+            filenamep = f.pystr() + xfileext
+            logging.debug('返回了文件名' + str(filenamep))
+        if messageBox.clickedButton() == buttonY:
+            filenamep = filename_list[filename_rd[i]]
+            logging.debug('返回了文件名' + str(filenamep))
+        # 反向赋值
+        filename_rlist[filename_rd[i]] = filenamep
     def click_B1(self):
         global fileaddress
         global bucketx
         global filename_list
         global filename_rd
-        global filenamep
         # 检验环境变量是否存在，不要忘了bucketx是桶名
         bucketx = (self.CB1_bucket.currentText())
         logging.debug('bucketx=' + str(bucketx))
@@ -522,7 +579,20 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     # 没有随机文件名，需要进行检查(单个）
                     (filepathx, filenamex) = os.path.split(str(fileaddress[0]))
                     self.isfilerp_check(bucketx, filenamex, 0)
-                    logging.debug('只有一个文件，直接isfilerp' + str(bucketx) + '///' + str(filenamex))
+                    if filename_r[0] == 114514:
+                        # 文件重名
+                        print('sssss')
+                        (l2filepath, l2filename) = os.path.split(str(fileaddress[0]))
+                        filename_list[0] = l2filename
+                        self.userjudge(0)
+                        # 开始上传文件
+                        thread = Thread(target=self.uploadfile, args=(fileaddress[0], filename_rlist[0]))
+                        thread.start()
+                    else:
+                        # 文件没有重名
+                        thread = Thread(target=self.uploadfile, args=(fileaddress[0], filenamex))
+                        thread.start()
+
             if self.judgepath(fileaddress[0]) == 0:
                 # 拖拽的为文件夹
                 g = os.walk(str(fileaddress[0]))
@@ -540,45 +610,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         thread = Thread(target=self.isfilerp_check,
                                         args=(bucketx, filename_list[i], i))
                         logging.debug('多线程：子进程isfilerp开始' + str(bucketx) + '///' + str(filename_list[int(i)]))
-                        self.statusbar.showMessage('正在判重文件名中，请稍候...')
+                        
                         thread.start()
                         # 程序停止等待进程结束
                         thread.join()
                     # 开始将重复文件询问给用户
                     for i in range(filer):
-                        # filename_list[filename_rd[i]]
-                        logging.debug('文件' + filename_list[filename_rd[i]] + '重名!')
-                        messageBox = QMessageBox()
-                        messageBox.setWindowTitle('警告')
-                        # 来个图标
-                        messageBox.setText('当前上传文件'+filename_list[filename_rd[i]]+'与库中原有文件重名，继续上传将覆盖原有文件，是否继续？')
-                        messageBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-                        buttonY = messageBox.button(QMessageBox.Yes)
-                        buttonY.setText('忽略')
-                        buttonN = messageBox.button(QMessageBox.No)
-                        buttonN.setText('更改上传文件名')
-                        buttonC = messageBox.button(QMessageBox.Cancel)
-                        buttonC.setText('上传随机文件名')
-                        messageBox.exec_()
-                        logging.debug('点击了' + str(messageBox.clickedButton()))
-                        # 分割文件名
-                        (xfilename, xfileext) = os.path.splitext(filename_list[filename_rd[i]])
-                        if messageBox.clickedButton() == buttonN:
-                            textttt, ok = QInputDialog.getText(self, '提示', '文件名重复，请输入新的文件名（不含拓展名）')
-                            if ok:
-                                filenamep = textttt + xfileext
-                            else:
-                                QMessageBox.warning(self, "警告", "您未输入文件名，将上传随机文件名！")
-                                filenamep = f.pystr() + xfileext
-                            logging.debug('返回了文件名' + str(filenamep))
-                        if messageBox.clickedButton() == buttonC:
-                            filenamep = f.pystr() + xfileext
-                            logging.debug('返回了文件名' + str(filenamep))
-                        if messageBox.clickedButton() == buttonY:
-                            filenamep = filename_list[filename_rd[i]]
-                            logging.debug('返回了文件名' + str(filenamep))
-                        # 反向赋值
-                        filename_rlist[filename_rd[i]] = filenamep
+                        # 调用判断语句
+                        self.userjudge(i)
                     # 总算可以上传了
                     for i in range(1, walktime):
                         # 记得加上文件路径
@@ -599,9 +638,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     import sys
-
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)  # 高分屏匹配
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QIcon(":/pic/MainLogo.svg"))
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)

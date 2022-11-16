@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="pic">
+    <file>MainLogo.svg</file>
+    <file>Warning.svg</file>
     <file>in.svg</file>
   </qresource>
 </RCC>
