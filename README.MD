@@ -10,6 +10,6 @@
 - [x] 更多在GUI里特有的小细节...
 ### 使用方法
 1. 下载releases里的可执行文件  
-2. 输入参数后即可使用（关于参数可参见[pk5ls20/COS_uploader/readme](https://github.com/pk5ls20/COS_uploader#readme)
+2. 输入参数后即可使用（关于参数可参见[pk5ls20/COS_uploader/readme](https://github.com/pk5ls20/COS_uploader#readme)）
 ### 部署方法
 `pip install -r requirements.txt`
