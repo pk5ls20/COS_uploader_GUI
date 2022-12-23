@@ -1,5 +1,5 @@
->  本项目为[pk5ls20-COS_uploader](https://github.com/pk5ls20/COS_uploader)的**GUI重构版**，GUI使用Pyqt5重新开发  
-> **墙裂推荐使用本GUI版本的`COS_uploader`**
+## **墙裂推荐使用本GUI版本的`COS_uploader`**
+>  本项目为[pk5ls20-COS_uploader](https://github.com/pk5ls20/COS_uploader)的**GUI重构版**，GUI使用Pyqt5重新开发
 ### 已实现/新增的功能
 - [x] 加载/保存参数文件
 - [x] 上传单个文件/文件夹

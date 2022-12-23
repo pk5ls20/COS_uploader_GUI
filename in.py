@@ -299,14 +299,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 logging.debug(e)
             self.statusbar.showMessage('系统已加载上帝模式文件，可以直接使用！')
             _translate = QtCore.QCoreApplication.translate
-            MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader:上帝模式"))
+            MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader V1.1:上帝模式"))
         else:
             pass
 
     # 绘制UI
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader"))
+        MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader V1.1"))
         self.TB1_main.setHtml(_translate("MainWindow",
                                          "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
                                          "<html><head><meta name=\"qrichtext\" content=\"1\" /><title>设置一个居中的图片</title><style type=\"text/css\">\n"
@@ -501,7 +501,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.statusbar.showMessage('参数加载成功！')
                     logging.info("参数加载成功！")
                     _translate = QtCore.QCoreApplication.translate
-                    MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader"))
+                    MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader V1.1"))
                 except WrongCOSPASError as e:
                     QMessageBox.warning(self, "注意", "Mykey校验未通过，请重新输入！", QMessageBox.Cancel)
                     self.statusbar.showMessage('Mykey校验未通过，请重新输入！')
