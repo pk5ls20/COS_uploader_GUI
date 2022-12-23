@@ -1,4 +1,5 @@
 ## **墙裂推荐使用本GUI版本的`COS_uploader`**
+## 不知道为什么主页没有Releases入口了，[Releases在这里](https://github.com/pk5ls20/COS_uploader_GUI/releases)
 >  本项目为[pk5ls20-COS_uploader](https://github.com/pk5ls20/COS_uploader)的**GUI重构版**，GUI使用Pyqt5重新开发
 ### 已实现/新增的功能
 - [x] 加载/保存参数文件
