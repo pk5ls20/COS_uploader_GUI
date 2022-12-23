@@ -26,7 +26,7 @@ from qcloud_cos import CosClientError
 from faker import Faker
 import os
 from Encryptor import enc
-from PyQt5 import QtCore, QtGui, QtWidgets, Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 from PySide2.QtCore import Signal, QObject
@@ -49,10 +49,20 @@ walktime = 1
 isok = 0
 loglevel = 0
 timex = 0
-logging.basicConfig(filename="test1.log", filemode="w",
-                    format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
-                    datefmt="%d-%M-%Y %H:%M:%S", level=logging.INFO)
-logging.debug("初始化变量完成！")
+
+
+class preload:
+    def __init__(self):
+        # 初始化日志
+        self.log_name = str(time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())) + str('.log')
+        logging.basicConfig(filename=self.log_name, filemode="w",
+                            format="%(asctime)s %(name)s:%(levelname)s:%(message)s",
+                            datefmt="%d-%M-%Y %H:%M:%S", level=logging.DEBUG)
+        logging.debug("初始化变量完成！")
+        # 初始化上帝系统
+
+
+preload()
 
 
 # 设置日志等级
@@ -80,6 +90,20 @@ class MyTB(QTextBrowser):
     logging.debug("TextBrowser拖拽重写完成！")
 
 
+class LoadCOSError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+class WrongCOSPASError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+
 # 加载主窗口
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
@@ -96,15 +120,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.old_hook = sys.excepthook
         sys.excepthook = self.catch_exceptions
 
-    def catch_exceptions(self, t,v,tb):
+
+
+    def catch_exceptions(self, t, v, tb):
         logging.critical(t)
         logging.critical(v)
         logging.critical(tb)
-        QMessageBox.warning(self,'警告','程序出现严重错误，请重新打开！')
+        QMessageBox.warning(self, '警告', '程序出现严重错误，请重新打开！')
 
     def changeint(self, sf, num):
         sf.setValue(int(num))
-        logging.debug('changeint/sf/num'+str(sf)+str(num))
+        logging.debug('changeint/sf/num' + str(sf) + str(num))
 
     # 输出重写
     def write(self, message):
@@ -258,6 +284,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         logging.debug("槽函数编写完成")
 
+        # 上帝模式
+        sudoload = 'C:\\ProgramData\\COS_uploader_config.sudo.enc'
+        if os.path.exists(sudoload):
+            try:
+                self.loadCOS(sudoload)
+            except LoadCOSError as e:
+                self.statusbar.showMessage('系统存在上帝模式文件，但加载失败，请手动加载参数')
+                logging.debug(e)
+            try:
+                self.CheckCOS(sudoload)
+            except WrongCOSPASError as e:
+                self.statusbar.showMessage('系统存在上帝模式文件，但校验未通过，请手动加载参数')
+                logging.debug(e)
+            self.statusbar.showMessage('系统已加载上帝模式文件，可以直接使用！')
+            _translate = QtCore.QCoreApplication.translate
+            MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader:上帝模式"))
+        else:
+            pass
+
     # 绘制UI
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -331,8 +376,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.LB3_1_loadfilename.setText('')
 
     def click_B3_save(self):
+        if self.LE3_mykey.text() == 'sudo':
+            QMessageBox.warning(self, '警告', '您将要保存为上帝模式的参数，详细见Readme！')
+            self.saveCOSfile('COS_uploader_config.sudo','C:\\ProgramData\\COS_uploader_config.sudo')
+        else:
+            self.saveCOSfile('SAVECOS.secret','SAVECOS.secret')
+
+
+
+    def saveCOSfile(self,filename,filepath):
         try:
-            fx = open("SAVECOS.secret", "w")
+            fx = open(filepath, "w")
             # 这之前要统计一下有多少个bucket
             fx.write(str(len((self.LE3_bucket.text()).split(';'))) + "\n")
             logging.debug('开始写入！' + str(len((self.LE3_bucket.text()).split(';'))) + "/" + self.LE3_mykey.text())
@@ -344,11 +398,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             fx.write(self.LE3_region.text() + "\n")
             fx.write(self.LE3_bucket.text() + "\n")
             fx.close()
-            enc.encrypt_file('SAVECOS.secret')
-            logging.info('写入SAVECOS.secret.enc成功')
-            QMessageBox.information(self, "COS_uploader", "写入SAVECOS.secret.enc成功")
-        except(IOError,TypeError):
-            QMessageBox.warning(self,'警告','在保存参数时出现了异常')
+            enc.encrypt_file(filepath)
+            logging.info('写入'+str(filename)+'.enc成功')
+            QMessageBox.information(self, "COS_uploader", '写入'+str(filename)+'.enc成功')
+        except(IOError, TypeError):
+            QMessageBox.warning(self, '警告', '在保存参数时出现了异常')
             logging.error("在保存参数时出现了异常")
 
     def click_CB3_2(self):
@@ -375,6 +429,56 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         logging.debug("CLEAR!")
         # 测试自定义按钮
 
+    # 对加载参数进行重写，本来想用封装类的方法搞，但以失败告终，还是用函数答辩
+    def loadCOS(self, COSfilename_e):
+        try:
+            enc.decrypt_file(COSfilename_e)
+            logging.debug('decryptd' + str(COSfilename_e))
+            # writein COS.secret in a_key
+            # 这块要重写
+            COSfilename = COSfilename_e[:-4]
+            logging.debug('COSfilename=' + str(COSfilename))
+            with open(COSfilename, 'r', encoding='UTF-8') as file:
+                time_cos = 0
+                for line in file:
+                    a_key[time_cos] = line.strip()
+                    logging.debug('分割原始参数中，a_key[time_cos]' + str(a_key[time_cos]) + str(time_cos))
+                    time_cos = time_cos + 1
+            enc.encrypt_file(COSfilename)
+            logging.debug('decryptd' + str(COSfilename))
+        except(IOError, ValueError):
+            raise LoadCOSError('读取COS参数文件失败')
+        pass
+
+    def CheckCOS(self,COSfilename_e):
+        global isok
+        if a_key[1] == self.LE3_mykey.text() or a_key[1] == 'sudo':  # 密码正确
+            # 开始加载变量
+            self.LB3_1_now_load.setText('当前加载为：')
+            self.LB3_1_loadfilename.setText(COSfilename_e[:-4])
+            self.LE3_mykey.setText(str(a_key[1]))
+            self.LE3_sid.setText(str(a_key[2]))
+            self.LE3_skey.setText(str(a_key[3]))
+            self.LE3_region.setText(str(a_key[4]))
+            self.LE3_bucket.setText(str(a_key[5]))
+            isok = 1
+            self.B1_upload.setEnabled(True)
+            # 将参数加载到第一页的选择库栏
+            # 首先将bucket分割，后赋值给a_key
+            list1: list[str] = str(a_key[5]).split(';')
+            timel = int(5)
+            for i in list1:
+                a_key[timel] = i
+                timel = timel + 1
+                logging.debug('开始转移参数' + str(timel))
+            # 进行一个参数的加载
+            self.CB1_bucket.clear()
+            self.CB1_bucket.addItems(list1)
+            logging.debug("参数已全部加载")
+        else:
+            raise WrongCOSPASError('参数校验未通过')
+        pass
+
     def click_B3(self):
         global isok
         COSfilename_e, fd = QFileDialog.getOpenFileName(self, '选择一个参数文件', './',
@@ -385,53 +489,24 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         else:
             if COSfilename_e != '':
                 try:
-                    enc.decrypt_file(COSfilename_e)
-                    logging.debug('decryptd' + str(COSfilename_e))
-                    # writein COS.secret in a_key
-                    # 这块要重写
-                    COSfilename = COSfilename_e[:-4]
-                    logging.debug('COSfilename=' + str(COSfilename))
-                    with open(COSfilename, 'r', encoding='UTF-8') as file:
-                        time_cos = 0
-                        for line in file:
-                            a_key[time_cos] = line.strip()
-                            logging.debug('分割原始参数中，a_key[time_cos]' + str(a_key[time_cos]) + str(time_cos))
-                            time_cos = time_cos + 1
-                    enc.encrypt_file(COSfilename)
-                except(IOError,ValueError):
+                    self.loadCOS(COSfilename_e)
+                except LoadCOSError as e:
                     QMessageBox.warning(self,'警告','在加载参数时出现了异常')
                     logging.error('在加载参数时出现了异常')
-                logging.debug('decryptd' + str(COSfilename))
+                    logging.error(e)
                 # 到此步，已将COS.secret加载到变量中，下一步开始比对密码值
-                if self.LE3_mykey.text() == a_key[1]:  # 密码正确
-                    # 开始加载变量
-                    self.LB3_1_now_load.setText('当前加载为：')
-                    self.LB3_1_loadfilename.setText(COSfilename)
-                    self.LE3_mykey.setText(str(a_key[1]))
-                    self.LE3_sid.setText(str(a_key[2]))
-                    self.LE3_skey.setText(str(a_key[3]))
-                    self.LE3_region.setText(str(a_key[4]))
-                    self.LE3_bucket.setText(str(a_key[5]))
-                    isok = 1
+                try:
+                    self.CheckCOS(COSfilename_e)
                     QMessageBox.information(self, "提示", "参数加载成功！")
                     self.statusbar.showMessage('参数加载成功！')
                     logging.info("参数加载成功！")
-                    self.B1_upload.setEnabled(True)
-                    # 将参数加载到第一页的选择库栏
-                    # 首先将bucket分割，后赋值给a_key
-                    list1: list[str] = str(a_key[5]).split(';')
-                    timel = int(5)
-                    for i in list1:
-                        a_key[timel] = i
-                        timel = timel + 1
-                        logging.debug('开始转移参数' + str(timel))
-                    # 进行一个参数的加载
-                    self.CB1_bucket.addItems(list1)
-                    logging.debug("参数已全部加载")
-                else:
+                    _translate = QtCore.QCoreApplication.translate
+                    MainWindow.setWindowTitle(_translate("COS_uploader", "COS_uploader"))
+                except WrongCOSPASError as e:
                     QMessageBox.warning(self, "注意", "Mykey校验未通过，请重新输入！", QMessageBox.Cancel)
                     self.statusbar.showMessage('Mykey校验未通过，请重新输入！')
                     logging.info("Mykey校验未通过，请重新输入！")
+                    logging.info(e)
             else:
                 QMessageBox.warning(self, "警告", "请选择文件", QMessageBox.Cancel)
                 self.statusbar.showMessage('请选择文件！')
@@ -462,7 +537,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             logging.info("开始上传")
             config = CosConfig(Region=a_key[4], SecretId=a_key[2],
                                SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
-            logging.debug('COS上传参数'+ str(a_key[4]) + '/' + str(a_key[2]) + '/' + str(a_key[3]))
+            logging.debug('COS上传参数' + str(a_key[4]) + '/' + str(a_key[2]) + '/' + str(a_key[3]))
             client = CosS3Client(config)
             ##### -----2.开始上传-----#####
             self.statusbar.showMessage('开始上传' + upfilepath + '啦~', 5)
@@ -478,8 +553,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             ##### -----3.总结-----#####
             self.statusbar.showMessage(upfilepath + '上传成功！', 5)
             logging.info(str(upfilepath) + '上传成功！')
+            self.PB1.setValue(100)
             # join
-            self.TB2_output.append(upfilepath+'的文件地址为'+'https://' + bucketx + '.cos.' + a_key[4] + '.myqcloud.com/' + upfilename)
+            self.TB2_output.append(
+                upfilepath + '的文件地址为' + 'https://' + bucketx + '.cos.' + a_key[4] + '.myqcloud.com/' + upfilename)
             self.TB2_output.append('\n')
         except (CosServiceError, CosClientError):
             self.statusbar.showMessage('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
@@ -492,7 +569,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             # global fileext
             global filer
             config = CosConfig(Region=a_key[4], SecretId=a_key[2],
-                            SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
+                               SecretKey=a_key[3], Token=None, Scheme='https')  # type: ignore
             logging.debug('在查找重复文件名线程中，参数加载完毕！')
             client = CosS3Client(config)
             response = client.object_exists(
@@ -512,7 +589,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             logging.info('上传COS中出现异常，请确定参数是否正确以及网络是否畅通')
 
     # 事件：点击B1
-    def userjudge(self,i):
+    def userjudge(self, i):
         # filename_list[filename_rd[i]]
         logging.debug('文件' + filename_list[filename_rd[i]] + '重名!')
         messageBox = QMessageBox()
@@ -548,6 +625,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             logging.debug('返回了文件名' + str(filenamep))
         # 反向赋值
         filename_rlist[filename_rd[i]] = filenamep
+
     def click_B1(self):
         global fileaddress
         global bucketx
@@ -572,10 +650,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 if self.CB3_2_israndomname.isChecked() == True:
                     logging.debug('检测到已勾选全部随机文件名，将不会检查！')
                     # 直接随机文件名上传
-                    (lfilepath,lfilename) = os.path.split(str(fileaddress[0]))
-                    (lfilename2,lext) = os.path.split(str(lfilename))
+                    (lfilepath, lfilename) = os.path.split(str(fileaddress[0]))
+                    (lfilename2, lext) = os.path.split(str(lfilename))
                     lfilenamef = f.pystr() + lext
-                    thread = Thread(target=self.uploadfile, args=(fileaddress[0],lfilenamef))
+                    thread = Thread(target=self.uploadfile, args=(fileaddress[0], lfilenamef))
                     thread.start()
                 else:
                     # 没有随机文件名，需要进行检查(单个）
@@ -628,14 +706,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                             Rfilename = filename_rlist[i]
                         else:
                             Rfilename = filename_list[i]
-                        thread = Thread(target=self.uploadfile, args=(Rfilewpath,Rfilename))
+                        thread = Thread(target=self.uploadfile, args=(Rfilewpath, Rfilename))
                         thread.start()
                 else:
                     # 强制随机文件名上传
-                    for i in range(1,walktime):
+                    for i in range(1, walktime):
                         Rfilewpath = str(fileaddress[0]) + "/" + filename_list[i]
-                        thread = Thread(target=self.uploadfile, args=(Rfilewpath,filename_list[i]))
+                        thread = Thread(target=self.uploadfile, args=(Rfilewpath, filename_list[i]))
                         thread.start()
+
 
 if __name__ == "__main__":
     import sys
